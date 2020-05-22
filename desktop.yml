@@ -1,0 +1,584 @@
+- name: hosts
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  tasks:
+    - name: insert line 127.0.0.1
+      lineinfile:
+        path: /etc/ansible/hosts
+        line: '127.0.0.1'
+  tags:
+   - hosts
+
+- name: ufw
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  tasks:
+    - name: install package
+      apt:
+        name: ufw
+        state: latest
+    - name: enable ufw, enable logging
+      ufw:
+        state: enabled
+        logging: high
+  tags:
+   - ufw
+
+- name: remove-home-dir
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  tasks:
+    - name: remove directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - ~/Videos
+        - ~/Music
+        - ~/Templates
+        - ~/Public
+  tags:
+      - remove-home-dir
+
+- name: chats
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+    - slack-desktop
+    - discord
+    - mattermost-desktop
+  tasks:
+    - name: install chats
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages }}"
+    - name: signal gpg key
+      apt_key:
+        url: https://updates.signal.org/desktop/apt/keys.asc
+        state: present
+    - name: signal repository
+      apt_repository:
+        repo: 'deb [arch=amd64] https://updates.signal.org/desktop/apt xenial main'
+        state: present
+        filename: signal-desktop
+        update_cache: yes
+    - name: install signal-desktop package
+      apt:
+        name: signal-desktop
+        state: latest
+  tags:
+    - chats
+
+- name: utility tools
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+      - unattended-upgrades
+      - intel-microcode
+      - locate
+      - curl
+      - git
+      - jq
+      - libvpx6
+      - tmux
+      - vim
+      - tree
+      - golang-go
+      - python3
+      - python3-pip
+      - docker.io
+      - mupdf-tools
+      - p7zip-full
+      - upx-ucl
+      - rar
+      - pst-utils
+      - dmg2img
+      - php
+      - sqlite3
+      - awscli
+      - ruby-bundler
+      - ruby-dev
+      - obs-studio
+      - audacity
+      - lxd
+      - virt-manager
+      - neofetch
+      - xclip
+  tasks:
+    - name: install utility packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages }}"
+    - name: atom pgp key
+      apt_key:
+        url: https://packagecloud.io/AtomEditor/atom/gpgkey
+        state: present
+    - name: atom repository
+      apt_repository:
+        repo: 'deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main'
+        state: present
+        filename: atom
+        update_cache: yes
+    - name: install atom package
+      apt:
+        name: atom
+        state: latest
+  tags:
+    - utility
+    - atom
+
+- name: network tools
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+      - net-tools
+      - traceroute
+      - network-manager
+      - nfs-common
+      - cifs-utils
+      - telnet
+      - netcat
+      - socat
+      - python3-scapy
+      - rdesktop
+      - openvpn
+      - whois
+      - speedtest-cli
+      - nmap
+      - masscan
+      - ftp
+      - samba-common-bin
+      - smbclient
+      - smbmap
+      - polenum
+      - ldap-utils
+      - samba
+      - cifs-utils
+      - nbtscan
+      - scanssh
+      - tcpflow
+      - wireshark
+      - tshark
+      - onesixtyone
+      - dnsrecon
+      - hunt
+  tasks:
+    - name: install network packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages }}"
+  tags:
+    - network
+
+- name: kubectl
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  tasks:
+    - name: kubernetes gpg key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+    - name: kubernetes repository
+      apt_repository:
+        repo: 'deb https://apt.kubernetes.io/ kubernetes-xenial main'
+        state: present
+        filename: kubernetes
+        update_cache: yes
+    - name: install apt-transport-https
+      apt:
+        name: apt-transport-https
+        state: latest
+    - name: install kubectl package
+      apt:
+        name: kubectl
+        state: latest
+  tags:
+    - kubectl
+    - cloud
+
+- name: gcloud
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  tasks:
+    - name: gcloud gpg key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        keyring: /usr/share/keyrings/cloud.google.gpg
+        state: present
+    - name: gcloud repository
+      apt_repository:
+        repo: 'deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main'
+        state: present
+        filename: google-cloud-sdk
+        update_cache: yes
+    - name: install google-cloud-sdk
+      apt:
+        name: google-cloud-sdk
+        state: latest
+  tags:
+    - gcloud
+    - cloud
+
+- name: database tools
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+      - sqlmap
+      - mdbtools
+  tasks:
+    - name: install database packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages }}"
+  tags:
+    - database
+
+- name: install wpscan
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  tasks:
+    - name: install ruby-dev dependency
+      apt:
+        name: ruby-dev
+        state: latest
+    - name: install wpscan
+      gem:
+        name: wpscan
+        state: latest
+    - lineinfile:
+        path: "/home/trevor/.bashrc"
+        line: 'export GOPATH=$HOME/go'
+        create: true
+    - lineinfile:
+        path: "/home/trevor/.bashrc"
+        line: 'export PATH=$GOPATH/bin:$GOROOT/bin:$PATH'
+        create: true
+    - lineinfile:
+        path: "/home/trevor/.profile"
+        line: 'export GOPATH=$HOME/go'
+        create: true
+  tags:
+    - wpscan
+    - web
+
+- name: web tools
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+      - cewl
+      - beef
+      - nikto
+      - wapiti
+  tasks:
+    - name: install web packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages }}"
+  tags:
+    - web
+
+- name: recon and osint
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+      - recon-ng
+  tasks:
+    - name: install recon and osint packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages }}"
+  tags:
+    - recon
+    - osint
+
+- name: bruteforce tools
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+      - hydra
+  tasks:
+    - name: install bruteforce packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages }}"
+  tags:
+    - bruteforce
+
+- name: forensic tools
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+      - libimage-exiftool-perl
+      - gdb
+      - steghide
+      - zbar-tools
+      - volatility
+      - binwalk
+      - stegsnow
+      - hexedit
+  tasks:
+    - name: install forensic packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages }}"
+  tags:
+    - forensic
+
+- name: wifi tools
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+      - aircrack-ng
+      - wifite
+      - pixiewps
+      - pyrit
+      - pyrit-opencl
+      - cowpatty
+      - airgraph-ng
+      - macchanger
+      - mdk4
+  tasks:
+    - name: install wifi tools
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages }}"
+  tags:
+    - wifi
+
+- name: bully
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  tasks:
+    - name: install bully dependencies
+      apt:
+        name: libpcap-dev
+        state: latest
+    - name: download bully
+      git:
+        repo: 'https://github.com/aanarchyy/bully'
+        dest: /opt/bully
+    - name: make and install
+      make:
+        chdir: /opt/bully/src
+        target: install
+  tags:
+    - bully
+    - wifi
+
+- name: cracking tools
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+      - ncrack
+      - john
+      - fcrackzip
+      - pdfcrack
+      - hashcat
+      - hashid
+      - crunch
+  tasks:
+    - name: install cracking tools
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages }}"
+  tags:
+    - crack
+
+- name: hcxdumptool
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  tasks:
+    - name: download hcxdumptool
+      git:
+        repo: 'https://github.com/ZerBea/hcxdumptool'
+        dest: /opt/hcxdumptool
+    - name: make and install
+      make:
+        chdir: /opt/hcxdumptool
+        target: install
+  tags:
+    - hcxdumptool
+    - crack
+
+- name: hcxtools
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+    - libcurl4-openssl-dev
+    - libssl-dev
+    - zlib1g-dev
+  tasks:
+    - name: install hcxtools dependencies
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ packages }}"
+    - name: download hcxtools
+      git:
+        repo: 'https://github.com/ZerBea/hcxtools'
+        dest: /opt/hcxtools
+    - name: make and install
+      make:
+        chdir: /opt/hcxtools
+        target: install
+  tags:
+    - hcxtools
+    - crack
+
+- name: hashcat-utils
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  tasks:
+    - name: download hashcat-utils
+      git:
+        repo: 'https://github.com/hashcat/hashcat-utils.git'
+        dest: /opt/hashcat-utils
+    - name: make and install
+      make:
+        chdir: /opt/hashcat-utils/src
+    - copy:
+        src: "{{ item }}"
+        dest: /usr/local/bin/
+        mode: preserve
+      with_fileglob:
+        - /opt/hashcat-utils/src/*.bin
+  tags:
+    - hashcat-utils
+    - crack
+
+- name: python3 and pip3
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  vars:
+    packages:
+      - pshtt
+      - stegcracker
+      - stegpy
+      - hash-id
+      - impacket
+      - dirhunt
+      - crackmapexec
+  tasks:
+    - name: install pip3 packages
+      pip:
+        name: "{{ item }}"
+        executable: pip3
+        state: latest
+        extra_args: --upgrade
+      loop: "{{ packages }}"
+  tags:
+    - pip3
+    - python3
+
+- name: wordlists
+  hosts: localhost
+  connection: local
+  become: true
+  ignore_errors: true
+  tasks:
+    - name: create dirbuster directory
+      file:
+        path: /usr/share/wordlists/dirbuster
+        state: directory
+    - name: create dirb directory
+      file:
+        path: /usr/share/wordlists/dirb
+        state: directory
+    - name: download wordlists
+      get_url:
+        url: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - { src: 'https://raw.githubusercontent.com/daviddias/node-dirbuster/master/lists/apache-user-enum-1.0.txt',
+            dest: /usr/share/wordlists/dirbuster/apache-user-enum-1.0.txt }
+        - { src: 'https://raw.githubusercontent.com/daviddias/node-dirbuster/master/lists/apache-user-enum-2.0.txt',
+            dest: /usr/share/wordlists/dirbuster/apache-user-enum-2.0.txt }
+        - { src: 'https://raw.githubusercontent.com/daviddias/node-dirbuster/master/lists/directory-list-1.0.txt',
+            dest: /usr/share/wordlists/dirbuster/directory-list-1.0.txt }
+        - { src: 'https://raw.githubusercontent.com/daviddias/node-dirbuster/master/lists/directory-list-2.3-big.txt',
+            dest: /usr/share/wordlists/dirbuster/directory-list-2.3-big.txt }
+        - { src: 'https://raw.githubusercontent.com/daviddias/node-dirbuster/master/lists/directory-list-2.3-medium.txt',
+            dest: /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt }
+        - { src: 'https://raw.githubusercontent.com/daviddias/node-dirbuster/master/lists/directory-list-2.3-small.txt',
+            dest: /usr/share/wordlists/dirbuster/directory-list-2.3-small.txt }
+        - { src: 'https://raw.githubusercontent.com/daviddias/node-dirbuster/master/lists/directory-list-lowercase-2.3-big.txt',
+            dest: /usr/share/wordlists/dirbuster/directory-list-2.3-big.txt }
+        - { src: 'https://raw.githubusercontent.com/daviddias/node-dirbuster/master/lists/directory-list-lowercase-2.3-medium.txt',
+            dest: /usr/share/wordlists/dirbuster/directory-list-lowercase-2.3-medium.txt }
+        - { src: 'https://raw.githubusercontent.com/daviddias/node-dirbuster/master/lists/directory-list-lowercase-2.3-small.txt',
+            dest: /usr/share/wordlists/dirbuster/directory-list-lowercase-2.3-small.txt }
+        - { src: 'https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt',
+            dest: /usr/share/wordlists/rockyou.txt }
+        - { src: 'https://www.wirelessvillage.ninja/docs/starwars.words',
+            dest: /usr/share/wordlists/starwars.words }
+        - { src: 'https://www.wirelessvillage.ninja/docs/spy_vs_spy.words',
+            dest: /usr/share/wordlists/spy_vs_spy.words }
+        - { src: 'https://wirelessvillage.ninja/docs/cyberpunk.words',
+            dest: /usr/share/wordlists/cyberpunk.words }
+        - { src: 'https://raw.githubusercontent.com/v0re/dirb/master/wordlists/common.txt',
+            dest: /usr/share/wordlists/dirb/common.txt }
+  tags:
+    - wordlists
